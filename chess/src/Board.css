@@ -1,0 +1,8 @@
+.Board {
+    display: flex; 
+    flex-direction: row; 
+    flex-wrap: wrap-reverse;
+    border: 3px solid black;
+    margin: auto; 
+    margin-top: 5%;
+}
