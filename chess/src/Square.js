@@ -7,6 +7,10 @@ export default function Square(props) {
         height: props.dimensions
     }
 
+    if (props.highlight) {
+        style.backgroundColor = props.squareColour === "Black" ? "#b77647" : "#de9d4d"
+    }
+    
     return (
         <div
             id={props.id}

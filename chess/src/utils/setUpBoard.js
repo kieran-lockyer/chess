@@ -5,7 +5,7 @@ export default function setUpBoard() {
     let rank = 1
     let file = 0
 
-    newBoard.forEach((square, square_index) => {
+    newBoard.forEach((square, index) => {
         let id = files[file] + rank.toString()
         if (file === 7) {
             file = -1
@@ -15,82 +15,89 @@ export default function setUpBoard() {
 
         let square_contents = {
             id,
+            index: index,
             piece: {}
         }
 
-        if (square_index >= 8 && square_index <= 15) {
+        if (index >= 8 && index <= 15) {
             square_contents.piece = {
                 type: "Pawn",
-                colour: "White"
+                colour: "White",
+                moved: false
             }
         }
-        if (square_index >= 48 && square_index <= 55) {
+        if (index >= 48 && index <= 55) {
             square_contents.piece = {
                 type: "Pawn",
-                colour: "Black"
+                colour: "Black",
+                moved: false
             }
         }
-        if (square_index === 0 || square_index === 7) {
+        if (index === 0 || index === 7) {
             square_contents.piece = {
                 type: "Rook",
-                colour: "White"
+                colour: "White",
+                moved: false
             }
         }
-        if (square_index === 56 || square_index === 63) {
+        if (index === 56 || index === 63) {
             square_contents.piece = {
                 type: "Rook",
-                colour: "Black"
+                colour: "Black",
+                moved: false
             }
         }
-        if (square_index === 1 || square_index === 6) {
+        if (index === 1 || index === 6) {
             square_contents.piece = {
                 type: "Knight",
                 colour: "White"
             }
         }
-        if (square_index === 57 || square_index === 62) {
+        if (index === 57 || index === 62) {
             square_contents.piece = {
                 type: "Knight",
                 colour: "Black"
             }
         }
-        if (square_index === 2 || square_index === 5) {
+        if (index === 2 || index === 5) {
             square_contents.piece = {
                 type: "Bishop",
                 colour: "White"
             }
         }
-        if (square_index === 58 || square_index === 61) {
+        if (index === 58 || index === 61) {
             square_contents.piece = {
                 type: "Bishop",
                 colour: "Black"
             }
         }
-        if (square_index === 3) {
+        if (index === 3) {
             square_contents.piece = {
                 type: "Queen",
                 colour: "White"
             }
         }
-        if (square_index === 59) {
+        if (index === 59) {
             square_contents.piece = {
                 type: "Queen",
                 colour: "Black"
             }
         }
-        if (square_index === 4) {
+        if (index === 4) {
             square_contents.piece = {
                 type: "King",
-                colour: "White"
+                colour: "White",
+                moved: false
             }
         }
-        if (square_index === 60) {
+        if (index === 60) {
             square_contents.piece = {
                 type: "King",
-                colour: "Black"
+                colour: "Black",
+                moved: false
             }
         }
-        newBoard[square_index] = square_contents
+        newBoard[index] = square_contents
     })
     
     return newBoard

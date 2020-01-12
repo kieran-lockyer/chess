@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import Square from './Square'
 import Piece from './Piece'
 import setUpBoard from './utils/setUpBoard'
+import checkLegalMoves from './utils/checkLegalMoves'
 import './Board.css'
 
 
@@ -24,7 +25,12 @@ export default function Board() {
         } else {
             if (turn === s.piece.colour) {
                 let newBoard = JSON.parse(JSON.stringify(board))
+                const legalMoves = checkLegalMoves(newBoard, s.id)
+                console.log('legalMoves', legalMoves)
                 newBoard.map(square => {
+                    if (legalMoves.includes(square.index)) {
+                        square.highlight = true
+                    }
                     if (square.selected) {
                         square.selected = false
                     }
@@ -46,28 +52,57 @@ export default function Board() {
         let newBoard = JSON.parse(JSON.stringify(board))
 
         if (source === destination) {
+            newBoard.map(square => {
+                if (square.highlight) {
+                    square.highlight = false
+                }
+                if (square.selected) {
+                    square.selected = false
+                }
+            })
+            console.log('bailing, same piece selected twice')
+            setBoard(newBoard)
             setSource('')
             return
         }
 
         const sourceSquare = newBoard.filter(square => square.id === source)[0]
-        newBoard.map(square => {
-            if (square.id === destination) {
-                square.piece = sourceSquare.piece
-                square.selected = true
-            }
-            return square
-        })
-        newBoard.map(square => {
-            if (square.id === source) {
-                square.piece = {}
-                square.selected = true
-            }
-            return square
-        })
-        setBoard(newBoard)
-        setSource('')
-        setTurn(turn === "White" ? "Black" : "White")
+        const destinationSquare = newBoard.filter(square => square.id === destination)[0]
+
+        const legalMoves = checkLegalMoves(newBoard, source)
+        console.log('legal moves', legalMoves)
+
+        if (legalMoves.includes(destinationSquare.index)) {
+            newBoard.map(square => {
+                if (square.id === destination) {
+                    square.piece = sourceSquare.piece
+                    square.selected = true
+                    if (square.piece.type === "Pawn" && !square.piece.moved) {
+                        square.piece.moved = true
+                    }
+                    if (square.piece.type === "Rook" && !square.piece.moved) {
+                        square.piece.moved = true
+                    }
+                    if (square.piece.type === "King" && !square.piece.moved) {
+                        square.piece.moved = true
+                    }
+                }
+                return square
+            })
+            newBoard.map(square => {
+                if (square.id === source) {
+                    square.piece = {}
+                    square.selected = true
+                }
+                if (square.highlight) {
+                    square.highlight = false
+                }
+                return square
+            })
+            setBoard(newBoard)
+            setSource('')
+            setTurn(turn === "White" ? "Black" : "White")
+        }
     }
 
     let swap = true
@@ -88,6 +123,7 @@ export default function Board() {
                         squareColour={squareColour}
                         selectSquare={() => selectSquare(s)}
                         selected={s.selected}
+                        highlight={s.highlight}
                     >
                         {s.piece.type && <Piece piece={s.piece.colour + s.piece.type} />}
                     </Square>
