@@ -15,7 +15,13 @@ export default function Square(props) {
         <div
             id={props.id}
             style={style}
-            onClick={props.selectSquare}
+            onClick={() => {
+                if (JSON.stringify(props.placeMode) !== JSON.stringify({})) {
+                    props.placePiece(props.id)
+                } else {
+                    props.selectSquare()
+                }
+            }}
         >
             {props.children}
         </div>

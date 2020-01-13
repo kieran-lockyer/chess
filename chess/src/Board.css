@@ -3,6 +3,12 @@
     flex-direction: row; 
     flex-wrap: wrap-reverse;
     border: 3px solid black;
-    margin: auto; 
+    margin-left: auto;
     margin-top: 5%;
+    margin-bottom: auto;
+}
+
+.side-panel {
+    margin-left: 100px;
+    margin-right: auto;
 }

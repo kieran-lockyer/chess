@@ -1,68 +1,16 @@
+import pawnMoves from './moves/pawnMoves'
+
 export default function checkLegalMoves(board, key) {
-    const {piece, index} = board.filter((square, index) => square.id === key)[0]
+    const {piece, index} = board.filter(square => square.id === key)[0]
     const legalMoves = []
     let possibleMoves = []
     let movesToCheckUp = []
     let movesToCheckDown = []
+    let movesToCheckLeft = []
+    let movesToCheckRight = []
     switch (piece.type) {
         case "Pawn":
-            possibleMoves = [7, 8, 9]
-            if (piece.colour === "White") {
-                let movesToCheck = []
-                for (let move of possibleMoves) {
-                    if (index + move >= 0 && index + move <= 63) {
-                        movesToCheck.push(move)
-                    }
-                }
-                if (movesToCheck.includes(7)) {
-                    if (board[index + 7].piece.type && board[index + 7].piece.colour !== piece.colour) {
-                        legalMoves.push(index + 7)
-                    } 
-                }
-                if (movesToCheck.includes(8)) {
-                    if (!board[index + 8].piece.type) {
-                        legalMoves.push(index + 8)
-                    }
-                }
-                if (movesToCheck.includes(9)) {
-                    if (board[index + 9].piece.type && board[index + 9].piece.colour !== piece.colour) {
-                        legalMoves.push(index + 9)
-                    }
-                }
-                if (!piece.moved) {
-                    if (!board[index + 16].piece.type) {
-                        legalMoves.push(index + 16)
-                    }
-                }
-            } else {
-                let movesToCheck = []
-                for (let move of possibleMoves) {
-                    if (index - move >= 0 && index - move <= 63) {
-                        movesToCheck.push(move)
-                    }
-                }
-                if (movesToCheck.includes(7)) {
-                    if (board[index - 7].piece.type && board[index - 7].piece.colour !== piece.colour) {
-                        legalMoves.push(index - 7)
-                    }
-                }
-                if (movesToCheck.includes(8)) {
-                    if (!board[index - 8].piece.type) {
-                        legalMoves.push(index - 8)
-                    }
-                }
-                if (movesToCheck.includes(9)) {
-                    if (board[index - 9].piece.type && board[index - 9].piece.colour !== piece.colour) {
-                        legalMoves.push(index - 9)
-                    }
-                }
-                if (!piece.moved) {
-                    if (!board[index - 16].piece.type) {
-                        legalMoves.push(index - 16)
-                    }
-                }
-            }
-            return legalMoves;
+            return pawnMoves(board, index, piece);
         case "Knight":
             possibleMoves = [6, 10, 15, 17]
             for (let move of possibleMoves) {
@@ -99,17 +47,23 @@ export default function checkLegalMoves(board, key) {
                 }
             }
             for (let move of movesToCheckUp) {
-                if (board[index + move].piece.colour !== piece.colour) {
-                    legalMoves.push(index + move)
-                } else {
-                    break
+                if (board[index + move].piece.type) {
+                    if (board[index + move].piece.colour !== piece.colour) {
+                        legalMoves.push(index + move)
+                        break
+                    } else {
+                        break
+                    }
                 }
             }
             for (let move of movesToCheckDown) {
-                if (board[index - move].piece.colour !== piece.colour) {
-                    legalMoves.push(index - move)
-                } else {
-                    break
+                if (board[index - move].piece.type) {
+                    if (board[index - move].piece.colour !== piece.colour) {
+                        legalMoves.push(index - move)
+                        break
+                    } else {
+                        break
+                    }
                 }
             }
             return legalMoves;
@@ -118,14 +72,14 @@ export default function checkLegalMoves(board, key) {
             for (let move of possibleRowMoves) {
                 if (index + move >= 0 && index + move <= 63) {
                     if (index % 8 < index + move % 8) {
-                        movesToCheckUp.push(move)
+                        movesToCheckRight.push(move)
                     }
                 }
             }
             for (let move of possibleRowMoves) {
                 if (index - move >= 0 && index - move <= 63) {
                     if (index % 8 > index - move % 8) {
-                        movesToCheckDown.push(move)
+                        movesToCheckLeft.push(move)
                     }
                 }
             }
@@ -140,18 +94,44 @@ export default function checkLegalMoves(board, key) {
                     movesToCheckDown.push(move)
                 }
             }
+            for (let move of movesToCheckRight) {
+                if (board[index + move].piece.type) {
+                    if (board[index + move].piece.colour !== piece.colour) {
+                        legalMoves.push(index + move)
+                        break
+                    } else {
+                        break
+                    }
+                }
+            }
+            for (let move of movesToCheckLeft) {
+                if (board[index - move].piece.type) {
+                    if (board[index - move].piece.colour !== piece.colour) {
+                        legalMoves.push(index - move)
+                        break
+                    } else {
+                        break
+                    }
+                }
+            }
             for (let move of movesToCheckUp) {
-                if (board[index + move].piece.colour !== piece.colour) {
-                    legalMoves.push(index + move)
-                } else {
-                    break
+                if (board[index + move].piece.type) {
+                    if (board[index + move].piece.colour !== piece.colour) {
+                        legalMoves.push(index + move)
+                        break
+                    } else {
+                        break
+                    }
                 }
             }
             for (let move of movesToCheckDown) {
-                if (board[index - move].piece.colour !== piece.colour) {
-                    legalMoves.push(index - move)
-                } else {
-                    break
+                if (board[index - move].piece.type) {
+                    if (board[index - move].piece.colour !== piece.colour) {
+                        legalMoves.push(index - move)
+                        break
+                    } else {
+                        break
+                    }
                 }
             }
             return legalMoves;

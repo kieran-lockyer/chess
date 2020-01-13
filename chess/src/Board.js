@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import Square from './Square'
 import Piece from './Piece'
+import PieceSidePanel from './PieceSidePanel'
 import setUpBoard from './utils/setUpBoard'
 import checkLegalMoves from './utils/checkLegalMoves'
 import './Board.css'
@@ -11,12 +12,22 @@ export default function Board() {
     const [dimensions, setDimensions] = useState(80)
     const [source, setSource] = useState('')
     const [turn, setTurn] = useState('White')
+    const [placeMode, setPlaceMode] = useState({})
     
     useEffect(() => {
-        console.log('running useEffect')
         setBoard(setUpBoard())
     },
     [])
+
+    const clearBoard = () => {
+        let newBoard = JSON.parse(JSON.stringify(board))
+        newBoard.map(square => {
+            square.piece = {}
+            square.highlight = false
+            square.selected = false
+        })
+        setBoard(newBoard)
+    }
 
     const selectSquare = (s) => {
         console.log(s.id, 'selected')
@@ -59,6 +70,7 @@ export default function Board() {
                 if (square.selected) {
                     square.selected = false
                 }
+                return square
             })
             console.log('bailing, same piece selected twice')
             setBoard(newBoard)
@@ -70,7 +82,6 @@ export default function Board() {
         const destinationSquare = newBoard.filter(square => square.id === destination)[0]
 
         const legalMoves = checkLegalMoves(newBoard, source)
-        console.log('legal moves', legalMoves)
 
         if (legalMoves.includes(destinationSquare.index)) {
             newBoard.map(square => {
@@ -105,30 +116,56 @@ export default function Board() {
         }
     }
 
-    let swap = true
-    
-    return (
-        <div className="Board" style={{maxWidth: dimensions * 8}}>
-            {board.map((s, s_idx) => {
-                if (s_idx % 8 === 0) {
-                    swap = !swap
-                }
-                let squareColour = !swap ? s_idx % 2 === 0 ? "Black" : "White" : s_idx % 2 === 0 ? "White" : "Black"
+    const selectPiece = (piece) => {
+        console.log(piece, 'selected')
+        setPlaceMode(piece)
+    }
 
-                return (
-                    <Square 
-                        key={`sqaure${s_idx}`} 
-                        id={s.id} 
-                        dimensions={`${dimensions}px`} 
-                        squareColour={squareColour}
-                        selectSquare={() => selectSquare(s)}
-                        selected={s.selected}
-                        highlight={s.highlight}
-                    >
-                        {s.piece.type && <Piece piece={s.piece.colour + s.piece.type} />}
-                    </Square>
-                )
-            })}
+    const placePiece = (id) => {
+        console.log('placing piece at', id)
+        let newBoard = JSON.parse(JSON.stringify(board))
+        newBoard.map(square => {
+            if (square.id === id) {
+                square.piece = placeMode
+            }
+            return square
+        })
+
+        setBoard(newBoard)
+        setPlaceMode({})
+    }
+
+    let swap = true
+    return (
+        <div style={{display: 'flex', justifyContent: 'space-around', alignItems: 'center'}}>
+            <div className="Board" style={{maxWidth: dimensions * 8}}>
+                {board.map((s, s_idx) => {
+                    if (s_idx % 8 === 0) {
+                        swap = !swap
+                    }
+                    let squareColour = !swap ? s_idx % 2 === 0 ? "Black" : "White" : s_idx % 2 === 0 ? "White" : "Black"
+
+                    return (
+                        <Square 
+                            key={`sqaure${s_idx}`} 
+                            id={s.id} 
+                            dimensions={`${dimensions}px`} 
+                            squareColour={squareColour}
+                            selectSquare={() => selectSquare(s)}
+                            placeMode={placeMode}
+                            placePiece={placePiece}
+                            selected={s.selected}
+                            highlight={s.highlight}
+                        >
+                            {s.piece.type && <Piece piece={s.piece.colour + s.piece.type} />}
+                        </Square>
+                    )
+                })}
+            </div>
+            <div className="side-panel" style={{marginLeft: '100px', marginRight: 'auto'}}>
+                <PieceSidePanel selectPiece={selectPiece}/>
+                <button onClick={clearBoard}>Clear Board</button>
+            </div>
         </div>
     )
 }
