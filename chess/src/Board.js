@@ -4,11 +4,13 @@ import Piece from './Piece'
 import PieceSidePanel from './PieceSidePanel'
 import setUpBoard from './utils/setUpBoard'
 import checkLegalMoves from './utils/checkLegalMoves'
+import checkThreats from './utils/checkThreats'
 import './Board.css'
 
 
 export default function Board() {
     const [board, setBoard] = useState([])
+    const [threats, setThreats] = useState({white: [], black: []})
     const [dimensions, setDimensions] = useState(80)
     const [source, setSource] = useState('')
     const [turn, setTurn] = useState('White')
@@ -16,8 +18,19 @@ export default function Board() {
     
     useEffect(() => {
         setBoard(setUpBoard())
-    },
-    [])
+    }, [])
+
+    useEffect(() => {
+        if (board.length) {
+            let newThreats = ({
+                white: checkThreats(board, "White"), 
+                black: checkThreats(board, "Black")
+            })
+            setThreats(newThreats)
+        } else {
+            setThreats({white: [], black: []})
+        }
+    }, [board])
 
     const clearBoard = () => {
         let newBoard = JSON.parse(JSON.stringify(board))
@@ -25,18 +38,19 @@ export default function Board() {
             square.piece = {}
             square.highlight = false
             square.selected = false
+            return square
         })
         setBoard(newBoard)
     }
 
     const selectSquare = (s) => {
         console.log(s.id, 'selected')
-        if (source) {
-            movePiece(source, s.id)
+        if (source !== '') {
+            movePiece(source, s.index)
         } else {
             if (turn === s.piece.colour) {
                 let newBoard = JSON.parse(JSON.stringify(board))
-                const legalMoves = checkLegalMoves(newBoard, s.id)
+                const legalMoves = checkLegalMoves(newBoard, s.index, threats)
                 console.log('legalMoves', legalMoves)
                 newBoard.map(square => {
                     if (legalMoves.includes(square.index)) {
@@ -45,14 +59,14 @@ export default function Board() {
                     if (square.selected) {
                         square.selected = false
                     }
-                    if (square.id === s.id) {
+                    if (square.index === s.index) {
                         square.selected = true
                     }
                     return square
                 })
                 if (s.piece.type) {
-                    console.log('setting source to', s.id)
-                    setSource(s.id)
+                    console.log('setting source to', s.index)
+                    setSource(s.index)
                 }
                 setBoard(newBoard)
             }
@@ -72,48 +86,66 @@ export default function Board() {
                 }
                 return square
             })
-            console.log('bailing, same piece selected twice')
             setBoard(newBoard)
             setSource('')
             return
         }
 
-        const sourceSquare = newBoard.filter(square => square.id === source)[0]
-        const destinationSquare = newBoard.filter(square => square.id === destination)[0]
+        const legalMoves = checkLegalMoves(newBoard, source, threats)
 
-        const legalMoves = checkLegalMoves(newBoard, source)
-
-        if (legalMoves.includes(destinationSquare.index)) {
-            newBoard.map(square => {
-                if (square.id === destination) {
-                    square.piece = sourceSquare.piece
-                    square.selected = true
-                    if (square.piece.type === "Pawn" && !square.piece.moved) {
-                        square.piece.moved = true
+        if (legalMoves.includes(destination)) {
+            if (newBoard[source].piece.type === "King" && !newBoard[source].piece.moved) {
+                if (newBoard[source].piece.colour === "White") {
+                    if (destination === 2) {
+                        newBoard[3].piece = newBoard[0].piece
+                        newBoard[0].piece = {}
+                        newBoard[3].selected = true
+                        newBoard[0].selected = true
+                        newBoard[3].moved = true
                     }
-                    if (square.piece.type === "Rook" && !square.piece.moved) {
-                        square.piece.moved = true
+                    if (destination === 6) {
+                        newBoard[5].piece = newBoard[7].piece
+                        newBoard[7].piece = {}
+                        newBoard[5].selected = true
+                        newBoard[7].selected = true
+                        newBoard[5].moved = true
                     }
-                    if (square.piece.type === "King" && !square.piece.moved) {
-                        square.piece.moved = true
+                } else {
+                    if (destination=== 58) {
+                        newBoard[59].piece = newBoard[56].piece
+                        newBoard[56].piece = {}
+                        newBoard[59].selected = true
+                        newBoard[56].selected = true
+                        newBoard[59].moved = true
+                    }
+                    if (destination === 62) {
+                        newBoard[61].piece = newBoard[63].piece
+                        newBoard[63].piece = {}
+                        newBoard[61].selected = true
+                        newBoard[63].selected = true
+                        newBoard[61].moved = true
                     }
                 }
-                return square
-            })
-            newBoard.map(square => {
-                if (square.id === source) {
-                    square.piece = {}
-                    square.selected = true
-                }
-                if (square.highlight) {
-                    square.highlight = false
-                }
-                return square
-            })
-            setBoard(newBoard)
-            setSource('')
-            setTurn(turn === "White" ? "Black" : "White")
+            }
+            newBoard[destination].piece = newBoard[source].piece
+            newBoard[destination].selected = true
+            if (newBoard[destination].piece.type === "Pawn" && !newBoard[destination].piece.moved) {
+                newBoard[destination].piece.moved = true
+            }
+            if (newBoard[destination].piece.type === "Rook" && !newBoard[destination].piece.moved) {
+                newBoard[destination].piece.moved = true
+            }
+            if (newBoard[destination].piece.type === "King" && !newBoard[destination].piece.moved) {
+                newBoard[destination].piece.moved = true
+            }
         }
+        newBoard[source].piece = {}
+        newBoard[source].selected = true
+        newBoard.map(square => square.highlight = false)
+
+        setBoard(newBoard)
+        setSource('')
+        setTurn(turn === "White" ? "Black" : "White")
     }
 
     const selectPiece = (piece) => {
@@ -125,7 +157,7 @@ export default function Board() {
         console.log('placing piece at', id)
         let newBoard = JSON.parse(JSON.stringify(board))
         newBoard.map(square => {
-            if (square.id === id) {
+            if (square.index === id) {
                 square.piece = placeMode
             }
             return square
@@ -148,7 +180,8 @@ export default function Board() {
                     return (
                         <Square 
                             key={`sqaure${s_idx}`} 
-                            id={s.id} 
+                            id={s.id}
+                            index={s.index}
                             dimensions={`${dimensions}px`} 
                             squareColour={squareColour}
                             selectSquare={() => selectSquare(s)}

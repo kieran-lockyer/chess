@@ -7,9 +7,7 @@ export const squareIsOccupied = (board, index) => {
 }
 
 export const squareCanBeAttacked = (board, index, piece) => {
-    console.log(index, piece.colour, board[index].piece, board[index].piece.colour)
-    console.log('can be attacked', board[index].piece.type && board[index].piece.colour !== piece.colour)
-    return board[index].piece.type && board[index].piece.colour !== piece.colour
+    return board[index].piece.type ? board[index].piece.colour !== piece.colour : true
 }
 
 const ROWS = []
@@ -31,15 +29,15 @@ for (let n = 0; n < 8; n++) {
 }
 
 const UPRIGHT = [ 
-    [ 0, 9, 18, 27, 36, 45, 54, 63 ],
-    [ 1, 10, 19, 28, 37, 46, 55 ],
-    [ 2, 11, 20, 29, 38, 47 ],
-    [ 3, 12, 21, 30, 39 ],
-    [ 4, 13, 22, 31 ],
-    [ 5, 14, 23 ],
-    [ 6, 15 ],
-    [ 7 ],
-    [ 8, 17, 26, 35, 44, 53, 62 ],
+    [  0,  9, 18, 27, 36, 45, 54, 63 ],
+    [  1, 10, 19, 28, 37, 46, 55 ],
+    [  2, 11, 20, 29, 38, 47 ],
+    [  3, 12, 21, 30, 39 ],
+    [  4, 13, 22, 31 ],
+    [  5, 14, 23 ],
+    [  6, 15 ],
+    [  7 ],
+    [  8, 17, 26, 35, 44, 53, 62 ],
     [ 16, 25, 34, 43, 52, 61 ],
     [ 24, 33, 42, 51, 60 ],
     [ 32, 41, 50, 59 ],
@@ -47,15 +45,16 @@ const UPRIGHT = [
     [ 48, 57],
     [ 56 ]
 ]
+
 const UPLEFT = [ 
-    [ 7, 14, 21, 28, 35, 42, 49, 56 ],
-    [ 6, 13, 20, 27, 34, 41, 48 ],
-    [ 5, 12, 19, 26, 33, 40 ],
-    [ 4, 11, 18, 25, 32 ],
-    [ 3, 10, 17, 24 ],
-    [ 2, 9, 16 ],
-    [ 1, 8 ],
-    [ 0 ],
+    [  7, 14, 21, 28, 35, 42, 49, 56 ],
+    [  6, 13, 20, 27, 34, 41, 48 ],
+    [  5, 12, 19, 26, 33, 40 ],
+    [  4, 11, 18, 25, 32 ],
+    [  3, 10, 17, 24 ],
+    [  2,  9, 16 ],
+    [  1,  8 ],
+    [  0 ],
     [ 15, 22, 29, 36, 43, 50, 57 ],
     [ 23, 30, 37, 44, 51, 58 ],
     [ 31, 38, 45, 52, 59 ],

@@ -17,7 +17,7 @@ export default function Square(props) {
             style={style}
             onClick={() => {
                 if (JSON.stringify(props.placeMode) !== JSON.stringify({})) {
-                    props.placePiece(props.id)
+                    props.placePiece(props.index)
                 } else {
                     props.selectSquare()
                 }
