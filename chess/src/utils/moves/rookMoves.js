@@ -1,4 +1,4 @@
-import {squareIsOnBoard, squareCanBeAttacked, isOnSameRow, isOnSameColumn, squareIsOccupied} from '../common'
+import {squareIsOnBoard, squareCanBeAttacked, isOnSameRow, isOnSameColumn, squareIsOccupied, isKingInCheck} from '../common'
 
 export default function rookMoves(board, index, piece) {
     const possibleRowMoves = [1, 2, 3, 4, 5, 6, 7]
@@ -10,11 +10,15 @@ export default function rookMoves(board, index, piece) {
             if (isOnSameRow(index, newSquare)) {
                 if (squareIsOccupied(board, newSquare)) {
                     if (squareCanBeAttacked(board, newSquare, piece)) {
-                        legalMoves.push(newSquare)
+                        if (!isKingInCheck(board, index, newSquare, piece)) {
+                            legalMoves.push(newSquare)
+                        }
                     }
                     break
                 }
-                legalMoves.push(newSquare)
+                if (!isKingInCheck(board, index, newSquare, piece)) {
+                    legalMoves.push(newSquare)
+                }
             }
         }
     }
@@ -24,11 +28,15 @@ export default function rookMoves(board, index, piece) {
             if (isOnSameRow(index, newSquare)) {
                 if (squareIsOccupied(board, newSquare)) {
                     if (squareCanBeAttacked(board, newSquare, piece)) {
-                        legalMoves.push(newSquare)
+                        if (!isKingInCheck(board, index, newSquare, piece)) {
+                            legalMoves.push(newSquare)
+                        }
                     }
                     break
                 }
-                legalMoves.push(newSquare)
+                if (!isKingInCheck(board, index, newSquare, piece)) {
+                    legalMoves.push(newSquare)
+                }
             }
         }
     }
@@ -38,11 +46,15 @@ export default function rookMoves(board, index, piece) {
             if (isOnSameColumn(index, newSquare)) {
                 if (squareIsOccupied(board, newSquare)) {
                     if (squareCanBeAttacked(board, newSquare, piece)) {
-                        legalMoves.push(newSquare)
+                        if (!isKingInCheck(board, index, newSquare, piece)) {
+                            legalMoves.push(newSquare)
+                        }
                     }
                     break
                 }
-                legalMoves.push(newSquare)
+                if (!isKingInCheck(board, index, newSquare, piece)) {
+                    legalMoves.push(newSquare)
+                }
             }
         }
     }
@@ -52,11 +64,15 @@ export default function rookMoves(board, index, piece) {
             if (isOnSameColumn(index, newSquare)) {
                 if (squareIsOccupied(board, newSquare)) {
                     if (squareCanBeAttacked(board, newSquare, piece)) {
-                        legalMoves.push(newSquare)
+                        if (!isKingInCheck(board, index, newSquare, piece)) {
+                            legalMoves.push(newSquare)
+                        }
                     }
                     break
                 }
-                legalMoves.push(newSquare)
+                if (!isKingInCheck(board, index, newSquare, piece)) {
+                    legalMoves.push(newSquare)
+                }
             }
         }
     }

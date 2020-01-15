@@ -1,4 +1,4 @@
-import {squareIsOnBoard, squareCanBeAttacked, isOnSameDiagonal, squareIsOccupied} from '../common'
+import {squareIsOnBoard, squareCanBeAttacked, isOnSameDiagonal, squareIsOccupied, isKingInCheck} from '../common'
 
 export default function bishopMoves(board, index, piece) {
     const possibleMovesLeft = [7, 14, 21, 28, 35, 42, 49]
@@ -10,11 +10,15 @@ export default function bishopMoves(board, index, piece) {
             if (isOnSameDiagonal(index, newSquare)) {
                 if (squareIsOccupied(board, newSquare)) {
                     if (squareCanBeAttacked(board, newSquare, piece)) {
-                        legalMoves.push(newSquare)
+                        if (!isKingInCheck(board, index, newSquare, piece)) {
+                            legalMoves.push(newSquare)
+                        }
                     }
                     break
                 }
-                legalMoves.push(newSquare)
+                if (!isKingInCheck(board, index, newSquare, piece)) {
+                    legalMoves.push(newSquare)
+                }
             }
         }
     }
@@ -24,11 +28,15 @@ export default function bishopMoves(board, index, piece) {
             if (isOnSameDiagonal(index, newSquare)) {
                 if (squareIsOccupied(board, newSquare)) {
                     if (squareCanBeAttacked(board, newSquare, piece)) {
-                        legalMoves.push(newSquare)
+                        if (!isKingInCheck(board, index, newSquare, piece)) {
+                            legalMoves.push(newSquare)
+                        }
                     }
                     break
                 }
-                legalMoves.push(newSquare)
+                if (!isKingInCheck(board, index, newSquare, piece)) {
+                    legalMoves.push(newSquare)
+                }
             }
         }
     }
@@ -38,11 +46,15 @@ export default function bishopMoves(board, index, piece) {
             if (isOnSameDiagonal(index, newSquare)) {
                 if (squareIsOccupied(board, newSquare)) {
                     if (squareCanBeAttacked(board, newSquare, piece)) {
-                        legalMoves.push(newSquare)
+                        if (!isKingInCheck(board, index, newSquare, piece)) {
+                            legalMoves.push(newSquare)
+                        }
                     }
                     break
                 }
-                legalMoves.push(newSquare)
+                if (!isKingInCheck(board, index, newSquare, piece)) {
+                    legalMoves.push(newSquare)
+                }
             }
         }
     }
@@ -52,11 +64,15 @@ export default function bishopMoves(board, index, piece) {
             if (isOnSameDiagonal(index, newSquare)) {
                 if (squareIsOccupied(board, newSquare)) {
                     if (squareCanBeAttacked(board, newSquare, piece)) {
-                        legalMoves.push(newSquare)
+                        if (!isKingInCheck(board, index, newSquare, piece)) {
+                            legalMoves.push(newSquare)
+                        }
                     }
                     break
                 }
-                legalMoves.push(newSquare)
+                if (!isKingInCheck(board, index, newSquare, piece)) {
+                    legalMoves.push(newSquare)
+                }
             }
         }
     }

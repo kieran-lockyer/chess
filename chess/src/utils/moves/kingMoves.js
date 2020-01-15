@@ -1,4 +1,4 @@
-import {squareIsOnBoard, squareCanBeAttacked, squareIsOccupied, isOnSameRow, isOnSameDiagonal} from '../common'
+import {squareIsOnBoard, squareCanBeAttacked, squareIsOccupied, isOnSameRow, isOnSameDiagonal, isKingInCheck} from '../common'
 
 export default function kingMoves(board, index, piece, threats = false) {
     const possibleMoves = [1, 7, 8, 9]
@@ -9,16 +9,22 @@ export default function kingMoves(board, index, piece, threats = false) {
             if (squareCanBeAttacked(board, newSquare, piece)) {
                 if (move === 1) {
                     if (isOnSameRow(index, newSquare)) {
-                        legalMoves.push(newSquare)
+                        if (!isKingInCheck(board, index, newSquare, piece)) {
+                            legalMoves.push(newSquare)
+                        }
                     }
                 }
                 if (move === 7 || move === 9) {
                     if (isOnSameDiagonal(index, newSquare)) {
-                        legalMoves.push(newSquare)
+                        if (!isKingInCheck(board, index, newSquare, piece)) {
+                            legalMoves.push(newSquare)
+                        }
                     }
                 }
                 if (move === 8) {
-                    legalMoves.push(newSquare)
+                    if (!isKingInCheck(board, index, newSquare, piece)) {
+                        legalMoves.push(newSquare)
+                    }
                 }
             }
         }
@@ -29,16 +35,22 @@ export default function kingMoves(board, index, piece, threats = false) {
             if (squareCanBeAttacked(board, newSquare, piece)) {
                 if (move === 1) {
                     if (isOnSameRow(index, newSquare)) {
-                        legalMoves.push(newSquare)
+                        if (!isKingInCheck(board, index, newSquare, piece)) {
+                            legalMoves.push(newSquare)
+                        }
                     }
                 } 
                 if (move === 7 || move === 9) {
                     if (isOnSameDiagonal(index, newSquare)) {
-                        legalMoves.push(newSquare)
+                        if (!isKingInCheck(board, index, newSquare, piece)) {
+                            legalMoves.push(newSquare)
+                        }
                     }
                 }
                 if (move === 8) {
-                    legalMoves.push(newSquare)
+                    if (!isKingInCheck(board, index, newSquare, piece)) {
+                        legalMoves.push(newSquare)
+                    }
                 }
             }
         }

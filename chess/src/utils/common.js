@@ -1,3 +1,5 @@
+import checkThreats from './checkThreats'
+
 export const squareIsOnBoard = (index) => {
     return index >= 0 && index <= 63
 }
@@ -8,6 +10,22 @@ export const squareIsOccupied = (board, index) => {
 
 export const squareCanBeAttacked = (board, index, piece) => {
     return board[index].piece.type ? board[index].piece.colour !== piece.colour : true
+}
+
+export const isKingInCheck = (board, startSquare, endSquare, piece) => {
+    const newBoard = JSON.parse(JSON.stringify(board))
+    newBoard.map(square => {
+        if (square.index === startSquare) {
+            square.piece = {}
+        }
+        if (square.index === endSquare) {
+            square.piece = piece
+        }
+        return square
+    })
+    const kingIndex = newBoard.filter(square => square.piece && square.piece.type === "King" && square.piece.colour === piece.colour)[0].index
+    const threats = checkThreats(newBoard, piece.colour === "White" ? "Black" : "White")
+    return threats.includes(kingIndex)
 }
 
 const ROWS = []
