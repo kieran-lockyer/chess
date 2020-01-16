@@ -154,8 +154,40 @@ export default function Board() {
             }
             newBoard[destination].piece = newBoard[source].piece
             newBoard[destination].selected = true
+
+            // caputure enpassant check
+            if (destination >= 40 && destination <= 47) {
+                if (newBoard[destination - 8].piece.enpassant) {
+                    newBoard[destination - 8].piece = {}
+                }
+            }
+            if (destination >= 16 && destination <= 23) {
+                if (newBoard[destination + 8].piece.enpassant) {
+                    newBoard[destination + 8].piece = {}
+                }
+            }
+
+            // remove existing enpassant
+            newBoard.map(square => { 
+                if (square.piece.type) {
+                    if (square.piece.enpassant) {
+                        square.piece.enpassant = false
+                    }
+                }
+                return square
+            })
             if (newBoard[destination].piece.type === "Pawn" && !newBoard[destination].piece.moved) {
                 newBoard[destination].piece.moved = true
+                // apply new enpassant
+                if (newBoard[destination].piece.colour === "White") { 
+                    if (destination >= 24 && destination <= 31) {
+                        newBoard[destination].piece.enpassant = true
+                    }
+                } else {
+                    if (destination >= 32 && destination <= 39) {
+                        newBoard[destination].piece.enpassant = true
+                    }
+                }
             }
             if (newBoard[destination].piece.type === "Rook" && !newBoard[destination].piece.moved) {
                 newBoard[destination].piece.moved = true
