@@ -12,18 +12,27 @@ export default function Square(props) {
     }
     
     return (
-        <div
-            id={props.id}
-            style={style}
-            onClick={() => {
-                if (JSON.stringify(props.placeMode) !== JSON.stringify({})) {
-                    props.placePiece(props.index)
-                } else {
-                    props.selectSquare()
-                }
-            }}
-        >
-            {props.children}
-        </div>
+        props.modal ? (
+            <div className="piece"
+                style={style}
+                onClick={() => {props.promote(props.piece)}}
+            >
+                {props.children}
+            </div> 
+        ) : (
+            <div
+                id={props.id}
+                style={style}
+                onClick={() => {
+                    if (JSON.stringify(props.placeMode) !== JSON.stringify({})) {
+                        props.placePiece(props.index)
+                    } else {
+                        props.selectSquare()
+                    }
+                }}
+            >
+                {props.children}
+            </div> 
+        )
     )
 }

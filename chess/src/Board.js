@@ -10,7 +10,10 @@ import './Board.css'
 
 
 export default function Board() {
+    const [loading, setLoading] = useState(true)
     const [board, setBoard] = useState([])
+    const [boardHistory, setBoardHistory] = useState([])
+    const [historyIndex, setHistoryIndex] = useState(false)
     const [legalMoves, setLegalMoves] = useState({white: [], black: []})
     const [threats, setThreats] = useState({white: [], black: []})
     const [dimensions, setDimensions] = useState(80)
@@ -18,9 +21,15 @@ export default function Board() {
     const [turn, setTurn] = useState('White')
     const [placeMode, setPlaceMode] = useState({})
     const [gameState, setGameState] = useState('running')
+    const [autoQueen, setAutoQueen] = useState(false)
+    const [menu, setMenu] = useState('moves')
     
     useEffect(() => {
-        setBoard(setUpBoard())
+        const board = setUpBoard()
+        setBoard(board)
+        setBoardHistory([board])
+        setHistoryIndex(0)
+        setLoading(false)
     }, [])
 
     useEffect(() => {
@@ -56,6 +65,7 @@ export default function Board() {
                 }
             }
         }
+        checkThreefoldRepetition()
     }, [board])
 
     const clearBoard = () => {
@@ -70,7 +80,6 @@ export default function Board() {
     }
 
     const selectSquare = (s) => {
-        console.log(s.id, 'selected')
         if (source !== '') {
             movePiece(source, s.index)
         } else {
@@ -90,7 +99,6 @@ export default function Board() {
                     return square
                 })
                 if (s.piece.type) {
-                    console.log('setting source to', s.index)
                     setSource(s.index)
                 }
                 setBoard(newBoard)
@@ -118,7 +126,6 @@ export default function Board() {
 
         const legalMoves = checkLegalMoves(newBoard, source, threats)
         if (legalMoves.includes(destination)) {
-            console.log(destination, legalMoves)
             if (newBoard[source].piece.type === "King" && !newBoard[source].piece.moved) {
                 if (newBoard[source].piece.colour === "White") {
                     if (destination === 2) {
@@ -155,15 +162,33 @@ export default function Board() {
             newBoard[destination].piece = newBoard[source].piece
             newBoard[destination].selected = true
 
-            // caputure enpassant check
-            if (destination >= 40 && destination <= 47) {
-                if (newBoard[destination - 8].piece.enpassant) {
-                    newBoard[destination - 8].piece = {}
+            if (newBoard[destination].piece.type === "Pawn") {
+                if (destination >= 56 && destination <=63 && newBoard[destination].piece.colour === "White") {
+                    if (autoQueen) {
+                        newBoard[destination].piece = {type: "Queen", colour: "White"}
+                    } else {
+                        let modal = document.getElementById("pawn_promotion");
+                        modal.style.display = "flex";
+                    }
                 }
-            }
-            if (destination >= 16 && destination <= 23) {
-                if (newBoard[destination + 8].piece.enpassant) {
-                    newBoard[destination + 8].piece = {}
+                if (destination >= 0 && destination <=7 && newBoard[destination].piece.colour === "Black") {
+                    if (autoQueen) {
+                        newBoard[destination].piece = {type: "Queen", colour: "Black"}
+                    } else {
+                        let modal = document.getElementById("pawn_promotion");
+                        modal.style.display = "block";
+                    }
+                }
+                // caputure enpassant check
+                if (destination >= 40 && destination <= 47) {
+                    if (newBoard[destination - 8].piece.enpassant) {
+                        newBoard[destination - 8].piece = {}
+                    }
+                }
+                if (destination >= 16 && destination <= 23) {
+                    if (newBoard[destination + 8].piece.enpassant) {
+                        newBoard[destination + 8].piece = {}
+                    }
                 }
             }
 
@@ -198,23 +223,25 @@ export default function Board() {
             newBoard[source].piece = {}
             newBoard[source].selected = true
             newBoard.map(square => square.highlight = false)
-            setBoard(newBoard)
+        setBoard(newBoard)
             setSource('')
             setTurn(turn === "White" ? "Black" : "White")
         } else {
             newBoard.map(square => square.highlight = false)
-            setBoard(newBoard)
+        setBoard(newBoard)
             setSource('')
         }
+        const newHistory = JSON.parse(JSON.stringify(boardHistory))
+        newHistory.push(newBoard)
+        setHistoryIndex(historyIndex + 1)
+        setBoardHistory(newHistory)
     }
 
     const selectPiece = (piece) => {
-        console.log(piece, 'selected')
         setPlaceMode(piece)
     }
 
     const placePiece = (id) => {
-        console.log('placing piece at', id)
         let newBoard = JSON.parse(JSON.stringify(board))
         newBoard.map(square => {
             if (square.index === id) {
@@ -226,40 +253,172 @@ export default function Board() {
         setBoard(newBoard)
         setPlaceMode({})
     }
+    
+    const promote = (piece) => {
+        const newBoard = JSON.parse(JSON.stringify(board))
+        if (piece.colour === "White") {
+            for (let square = 56; square <= 63; square++) {
+                if (newBoard[square].piece.type === "Pawn") {
+                    newBoard[square].piece = piece
+                    break
+                }
+            }
+        } else {
+            for (let square = 0; square <= 7; square++) {
+                if (newBoard[square].piece.type === "Pawn") {
+                    newBoard[square].piece = piece
+                    break
+                }
+            }
+        }
+        setBoard(newBoard)
+        const newHistory = JSON.parse(JSON.stringify(boardHistory))
+        newHistory[boardHistory.length - 1] = newBoard
+        setBoardHistory(newHistory)
+        let modal = document.getElementById("pawn_promotion");
+        modal.style.display = "none";
+    }
+
+    const checkThreefoldRepetition = () => {
+        let occurrences = {}
+        for (let position of boardHistory) {
+            const positionString = JSON.stringify(position)
+            if (occurrences[positionString]) {
+                occurrences[positionString] += 1 
+            } else {
+                occurrences[positionString] = 1
+            }
+        }
+        for (let position of Object.keys(occurrences)) {
+            if (occurrences[position] >= 3) {
+                setGameState('stalemate')
+            }
+        }
+    }
 
     let swap = true
+
+    if (loading) {
+        return (
+            <div>Loading</div>
+        )
+    }
 
     return (
         <div style={{display: 'flex', justifyContent: 'space-around', alignItems: 'center'}}>
             <div className="Board" style={{maxWidth: dimensions * 8}}>
-                {board.map((s, s_idx) => {
-                    if (s_idx % 8 === 0) {
-                        swap = !swap
-                    }
-                    let squareColour = !swap ? s_idx % 2 === 0 ? "Black" : "White" : s_idx % 2 === 0 ? "White" : "Black"
+                    {boardHistory.length > 0 && historyIndex === boardHistory.length - 1 ? (
+                        board.map((s, s_idx) => {
+                            if (s_idx % 8 === 0) {
+                                swap = !swap
+                            }
+                            let squareColour = !swap ? s_idx % 2 === 0 ? "Black" : "White" : s_idx % 2 === 0 ? "White" : "Black"
 
-                    return (
-                        <Square 
-                            key={`sqaure${s_idx}`} 
-                            id={s.id}
-                            index={s.index}
-                            dimensions={`${dimensions}px`} 
-                            squareColour={squareColour}
-                            selectSquare={() => selectSquare(s)}
-                            placeMode={placeMode}
-                            placePiece={placePiece}
-                            selected={s.selected}
-                            highlight={s.highlight}
-                        >
-                            {s.piece.type && <Piece piece={s.piece.colour + s.piece.type} />}
-                        </Square>
-                    )
-                })}
+                            return (
+                                <Square 
+                                    key={`sqaure${s_idx}`} 
+                                    id={s.id}
+                                    index={s.index}
+                                    dimensions={`${dimensions}px`} 
+                                    squareColour={squareColour}
+                                    selectSquare={() => selectSquare(s)}
+                                    placeMode={placeMode}
+                                    placePiece={placePiece}
+                                    selected={s.selected}
+                                    highlight={s.highlight}
+                                >
+                                    {s.piece.type && <Piece piece={s.piece.colour + s.piece.type} />}
+                                </Square>
+                            )
+                        })
+                    ) : (
+                        boardHistory[historyIndex].map((s, s_idx) => {
+                            if (s_idx % 8 === 0) {
+                                swap = !swap
+                            }
+                            let squareColour = !swap ? s_idx % 2 === 0 ? "Black" : "White" : s_idx % 2 === 0 ? "White" : "Black"
+
+                            return (
+                                <Square 
+                                    key={`sqaure${s_idx}`} 
+                                    id={s.id}
+                                    index={s.index}
+                                    dimensions={`${dimensions}px`} 
+                                    squareColour={squareColour}
+                                    selectSquare={() => selectSquare(s)}
+                                    placeMode={placeMode}
+                                    placePiece={placePiece}
+                                    selected={s.selected}
+                                    highlight={s.highlight}
+                                >
+                                    {s.piece.type && <Piece piece={s.piece.colour + s.piece.type} />}
+                                </Square>
+                            )
+                        })
+                    )}
             </div>
             <p style={{marginLeft: "10px", marginRight: "10px"}}>{gameState === 'running' ? turn + ' to move' : gameState === "stalemate" ? "Draw" : "Checkmate - " + (turn === "White" ? "Black" : "White") + " wins"}</p>
             <div className="side-panel" style={{marginLeft: '100px', marginRight: 'auto'}}>
-                <PieceSidePanel selectPiece={selectPiece}/>
-                <button onClick={clearBoard}>Clear Board</button>
+                <button onClick={() => setMenu('moves')}>Move History</button>
+                <button onClick={() => setMenu('setup')}>Set Up Board</button>
+                {menu === 'moves' ? (
+                    <div>
+                        {historyIndex > 0 && <button onClick={() => setHistoryIndex(historyIndex - 1)}>{'<'}</button>}
+                        {boardHistory.length > 1 && historyIndex < boardHistory.length - 1 &&  <button onClick={() => setHistoryIndex(historyIndex + 1)}>{'>'}</button>}
+                    </div>
+                ) : (
+                    <div>
+                        <PieceSidePanel selectPiece={selectPiece}/>
+                        <button onClick={clearBoard}>Clear Board</button>
+                    </div>
+                )}
+                <button onClick={() => setAutoQueen(!autoQueen)} style={{backgroundColor: autoQueen ? "green" : "grey"}}>Auto Queen</button>
+            </div>
+
+            {/*  Pawn Promotion Modal */}
+            <div id="pawn_promotion" className="modal">
+                <div className="modal-content">
+                    <Square 
+                            id={"Promote__Knight"}
+                            modal={true}
+                            dimensions={`${dimensions}px`} 
+                            squareColour={"White"}
+                            piece={{type: "Knight", colour: turn === "White" ? "Black" : "White"}}
+                            promote={(p) => promote(p)}
+                        >
+                            <Piece piece={(turn === "White" ? "Black" : "White") + "Knight"} />
+                    </Square>
+                    <Square 
+                            id={"Promote__Bishop"}
+                            modal={true}
+                            dimensions={`${dimensions}px`} 
+                            squareColour={"White"}
+                            piece={{type: "Bishop", colour: turn === "White" ? "Black" : "White"}}
+                            promote={(p) => promote(p)}
+                        >
+                            <Piece piece={(turn === "White" ? "Black" : "White") + "Bishop"} />
+                    </Square>
+                    <Square 
+                            id={"Promote__Rook"}
+                            modal={true}
+                            dimensions={`${dimensions}px`} 
+                            squareColour={"White"}
+                            piece={{type: "Rook", colour: turn === "White" ? "Black" : "White"}}
+                            promote={(p) => promote(p)}
+                        >
+                            <Piece piece={(turn === "White" ? "Black" : "White") + "Rook"} />
+                    </Square>
+                    <Square 
+                            id={"Promote__Queen"}
+                            modal={true}
+                            dimensions={`${dimensions}px`} 
+                            squareColour={"White"}
+                            piece={{type: "Queen", colour: turn === "White" ? "Black" : "White"}}
+                            promote={(p) => promote(p)}
+                        >
+                            <Piece piece={(turn === "White" ? "Black" : "White") + "Queen"} />
+                    </Square>
+                </div>
             </div>
         </div>
     )
