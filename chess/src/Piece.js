@@ -28,9 +28,14 @@ const pieces = {
 }
 
 export default function Piece(props) {
-    return (
-        <div>
-            {props.piece && <img src={pieces[props.piece]} alt={props.piece} style={{width: "80px", height:"80px"}} onClick={props.onClick} />}
-        </div>
-    )
+    const style={
+        minHeight: props.dimensions,
+        width: props.dimensions
+    }
+
+    if (props.piece) { 
+        return (
+            <img src={pieces[props.piece]} alt={props.piece} style={style} onClick={props.onClick} />
+        )
+    }
 }

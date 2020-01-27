@@ -7,6 +7,7 @@ import checkLegalMoves from './utils/checkLegalMoves'
 import checkThreats from './utils/checkThreats'
 import {isKingInCheck} from './utils/common'
 import './Board.css'
+import PawnPromotionModal from './PawnPromotionModal'
 
 
 export default function Board() {
@@ -16,7 +17,7 @@ export default function Board() {
     const [historyIndex, setHistoryIndex] = useState(false)
     const [legalMoves, setLegalMoves] = useState({white: [], black: []})
     const [threats, setThreats] = useState({white: [], black: []})
-    const [dimensions, setDimensions] = useState(80)
+    const [dimensions, setDimensions] = useState(5)
     const [source, setSource] = useState('')
     const [turn, setTurn] = useState('White')
     const [placeMode, setPlaceMode] = useState({})
@@ -296,8 +297,6 @@ export default function Board() {
         }
     }
 
-    let swap = true
-
     if (loading) {
         return (
             <div>Loading</div>
@@ -305,21 +304,18 @@ export default function Board() {
     }
 
     return (
-        <div style={{display: 'flex', justifyContent: 'space-around', alignItems: 'center'}}>
-            <div className="Board" style={{maxWidth: dimensions * 8}}>
+        <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+            <div className="Board" style={{width: `${dimensions * 8}vw`}}>
                     {boardHistory.length > 0 && historyIndex === boardHistory.length - 1 ? (
                         board.map((s, s_idx) => {
-                            if (s_idx % 8 === 0) {
-                                swap = !swap
-                            }
-                            let squareColour = !swap ? s_idx % 2 === 0 ? "Black" : "White" : s_idx % 2 === 0 ? "White" : "Black"
+                            let squareColour = Math.floor(s_idx / 8) % 2 === 0 ? s_idx % 2 === 0 ? "Black" : "White" : s_idx % 2 === 0 ? "White" : "Black"
 
                             return (
                                 <Square 
                                     key={`sqaure${s_idx}`} 
                                     id={s.id}
                                     index={s.index}
-                                    dimensions={`${dimensions}px`} 
+                                    dimensions={`${dimensions}vw`} 
                                     squareColour={squareColour}
                                     selectSquare={() => selectSquare(s)}
                                     placeMode={placeMode}
@@ -327,23 +323,20 @@ export default function Board() {
                                     selected={s.selected}
                                     highlight={s.highlight}
                                 >
-                                    {s.piece.type && <Piece piece={s.piece.colour + s.piece.type} />}
+                                    {s.piece.type && <Piece piece={s.piece.colour + s.piece.type} dimensions={`${dimensions}vw`} />}
                                 </Square>
                             )
                         })
                     ) : (
                         boardHistory[historyIndex].map((s, s_idx) => {
-                            if (s_idx % 8 === 0) {
-                                swap = !swap
-                            }
-                            let squareColour = !swap ? s_idx % 2 === 0 ? "Black" : "White" : s_idx % 2 === 0 ? "White" : "Black"
+                            let squareColour = Math.floor(s_idx / 8) % 2 === 0 ? s_idx % 2 === 0 ? "Black" : "White" : s_idx % 2 === 0 ? "White" : "Black"
 
                             return (
                                 <Square 
                                     key={`sqaure${s_idx}`} 
                                     id={s.id}
                                     index={s.index}
-                                    dimensions={`${dimensions}px`} 
+                                    dimensions={`${dimensions}vw`} 
                                     squareColour={squareColour}
                                     selectSquare={() => selectSquare(s)}
                                     placeMode={placeMode}
@@ -351,14 +344,14 @@ export default function Board() {
                                     selected={s.selected}
                                     highlight={s.highlight}
                                 >
-                                    {s.piece.type && <Piece piece={s.piece.colour + s.piece.type} />}
+                                    {s.piece.type && <Piece piece={s.piece.colour + s.piece.type} dimensions={`${dimensions}vw`} />}
                                 </Square>
                             )
                         })
                     )}
             </div>
-            <p style={{marginLeft: "10px", marginRight: "10px"}}>{gameState === 'running' ? turn + ' to move' : gameState === "stalemate" ? "Draw" : "Checkmate - " + (turn === "White" ? "Black" : "White") + " wins"}</p>
-            <div className="side-panel" style={{marginLeft: '100px', marginRight: 'auto'}}>
+            <div className="side-panel" >
+                <p style={{marginLeft: "10px", marginRight: "10px"}}>{gameState === 'running' ? turn + ' to move' : gameState === "stalemate" ? "Draw" : "Checkmate - " + (turn === "White" ? "Black" : "White") + " wins"}</p>
                 <button onClick={() => setMenu('moves')}>Move History</button>
                 <button onClick={() => setMenu('setup')}>Set Up Board</button>
                 {menu === 'moves' ? (
@@ -368,58 +361,13 @@ export default function Board() {
                     </div>
                 ) : (
                     <div>
-                        <PieceSidePanel selectPiece={selectPiece}/>
+                        <PieceSidePanel selectPiece={selectPiece} dimensions={dimensions}/>
                         <button onClick={clearBoard}>Clear Board</button>
                     </div>
                 )}
                 <button onClick={() => setAutoQueen(!autoQueen)} style={{backgroundColor: autoQueen ? "green" : "grey"}}>Auto Queen</button>
             </div>
-
-            {/*  Pawn Promotion Modal */}
-            <div id="pawn_promotion" className="modal">
-                <div className="modal-content">
-                    <Square 
-                            id={"Promote__Knight"}
-                            modal={true}
-                            dimensions={`${dimensions}px`} 
-                            squareColour={"White"}
-                            piece={{type: "Knight", colour: turn === "White" ? "Black" : "White"}}
-                            promote={(p) => promote(p)}
-                        >
-                            <Piece piece={(turn === "White" ? "Black" : "White") + "Knight"} />
-                    </Square>
-                    <Square 
-                            id={"Promote__Bishop"}
-                            modal={true}
-                            dimensions={`${dimensions}px`} 
-                            squareColour={"White"}
-                            piece={{type: "Bishop", colour: turn === "White" ? "Black" : "White"}}
-                            promote={(p) => promote(p)}
-                        >
-                            <Piece piece={(turn === "White" ? "Black" : "White") + "Bishop"} />
-                    </Square>
-                    <Square 
-                            id={"Promote__Rook"}
-                            modal={true}
-                            dimensions={`${dimensions}px`} 
-                            squareColour={"White"}
-                            piece={{type: "Rook", colour: turn === "White" ? "Black" : "White"}}
-                            promote={(p) => promote(p)}
-                        >
-                            <Piece piece={(turn === "White" ? "Black" : "White") + "Rook"} />
-                    </Square>
-                    <Square 
-                            id={"Promote__Queen"}
-                            modal={true}
-                            dimensions={`${dimensions}px`} 
-                            squareColour={"White"}
-                            piece={{type: "Queen", colour: turn === "White" ? "Black" : "White"}}
-                            promote={(p) => promote(p)}
-                        >
-                            <Piece piece={(turn === "White" ? "Black" : "White") + "Queen"} />
-                    </Square>
-                </div>
-            </div>
+            <PawnPromotionModal promote={promote} dimensions={dimensions} turn={turn}/>
         </div>
     )
 }

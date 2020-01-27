@@ -2,14 +2,15 @@
     display: flex; 
     flex-direction: row; 
     flex-wrap: wrap-reverse;
-    border: 3px solid black;
+    border: 20px solid darkslategrey;
     margin-left: auto;
     margin-top: 5%;
     margin-bottom: auto;
+    margin-right: auto;
 }
 
 .side-panel {
-    margin-left: 100px;
+    margin-left: auto;
     margin-right: auto;
 }
 
