@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useReducer} from 'react'
 import Square from './Square'
 import Piece from './Piece'
 import PieceSidePanel from './PieceSidePanel'
@@ -8,7 +8,20 @@ import checkThreats from './utils/checkThreats'
 import {isKingInCheck} from './utils/common'
 import './Board.css'
 import PawnPromotionModal from './PawnPromotionModal'
+import uuidv4 from 'uuid/v4'
 
+// const initialState = { todoList: [] };
+
+// const reducer = (state, action) => {
+//     switch (action.type) {
+//         case "onopen":
+//             return { todoList: action.payload };
+//         case "onmessage":
+//             return { todoList: [...state.todoList, action.payload] };
+//         default:
+//             break
+//     }
+// }
 
 export default function Board() {
     const [loading, setLoading] = useState(true)
@@ -21,17 +34,64 @@ export default function Board() {
     const [source, setSource] = useState('')
     const [turn, setTurn] = useState('White')
     const [placeMode, setPlaceMode] = useState({})
-    const [gameState, setGameState] = useState('running')
+    const [gameState, setGameState] = useState('searching')
     const [autoQueen, setAutoQueen] = useState(false)
     const [menu, setMenu] = useState('moves')
-    
+    const [position, setPosition] = useState(null)
+    const [token, setToken] = useState(uuidv4())
+    // const [state, dispatch] = useReducer(reducer, initialState);
+
+    const connection = new WebSocket('ws://localhost:9090/')
+
     useEffect(() => {
+
         const board = setUpBoard()
+        console.log('initial board set')
         setBoard(board)
+        console.log('initial board history set')
         setBoardHistory([board])
         setHistoryIndex(0)
         setLoading(false)
+
+        connection.onopen = () => {
+            console.log('connection established')
+            connection.send(JSON.stringify({action: 'searching', token}))
+        }
+
+        connection.onmessage = (message) => {
+            console.log('GOT A MESSAGE', message)
+            const data = JSON.parse(message.data)
+            console.log('data', data)
+            if (data.position) {
+                console.log('setting token and position')
+                setPosition(data.position)
+            }
+            if (data.state === 'begin') {
+                console.log('setting gamestate')
+                setGameState('running')
+            }
+            if (data.move) {
+                console.log('move time for')
+                console.log(data.token, data.token !== token, token)
+                if (data.token !== token) {
+                    console.log('opponent')
+                    setBoard(data.move)
+                    const oldHistory = [board]
+                    console.log('old history', oldHistory)
+                    const newHistory = JSON.parse(JSON.stringify(oldHistory))
+                    console.log('new history', newHistory)
+                    newHistory.push(data.move)
+                    console.log('incrementing history index')
+                    setHistoryIndex(historyIndex + 1)
+                    console.log('adding to board history from onMessage')
+                    setBoardHistory(newHistory)
+                    setTurn('Black')
+                }
+            }
+        }
     }, [])
+
+    
 
     useEffect(() => {
         const newThreats = {white: [], black: []}
@@ -224,18 +284,22 @@ export default function Board() {
             newBoard[source].piece = {}
             newBoard[source].selected = true
             newBoard.map(square => square.highlight = false)
-        setBoard(newBoard)
+            setBoard(newBoard)
             setSource('')
             setTurn(turn === "White" ? "Black" : "White")
         } else {
             newBoard.map(square => square.highlight = false)
-        setBoard(newBoard)
+            setBoard(newBoard)
             setSource('')
         }
         const newHistory = JSON.parse(JSON.stringify(boardHistory))
+        console.log('newHistory', newHistory)
         newHistory.push(newBoard)
+        console.log('incrementing history index')
         setHistoryIndex(historyIndex + 1)
+        console.log('adding to board history from make move')
         setBoardHistory(newHistory)
+        connection.send(JSON.stringify({move: newBoard, token, action: 'move'}))
     }
 
     const selectPiece = (piece) => {
@@ -275,6 +339,7 @@ export default function Board() {
         setBoard(newBoard)
         const newHistory = JSON.parse(JSON.stringify(boardHistory))
         newHistory[boardHistory.length - 1] = newBoard
+        console.log('rewriting history')
         setBoardHistory(newHistory)
         let modal = document.getElementById("pawn_promotion");
         modal.style.display = "none";
@@ -303,6 +368,11 @@ export default function Board() {
         )
     }
 
+    console.log('pre render data check')
+    console.log('token', token, 'position', position, 'gameState', gameState)
+    console.log('board', board, 'boardHistory', boardHistory, 'historyIndex', historyIndex)
+    console.log('done')
+    
     return (
         <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
             <div className="Board" style={{width: `${dimensions * 8}vw`}}>
@@ -328,7 +398,7 @@ export default function Board() {
                             )
                         })
                     ) : (
-                        boardHistory[historyIndex].map((s, s_idx) => {
+                        boardHistory[historyIndex] && boardHistory[historyIndex].map((s, s_idx) => {
                             let squareColour = Math.floor(s_idx / 8) % 2 === 0 ? s_idx % 2 === 0 ? "Black" : "White" : s_idx % 2 === 0 ? "White" : "Black"
 
                             return (
