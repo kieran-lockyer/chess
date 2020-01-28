@@ -10,88 +10,76 @@ import './Board.css'
 import PawnPromotionModal from './PawnPromotionModal'
 import uuidv4 from 'uuid/v4'
 
-// const initialState = { todoList: [] };
+const initialState = { boardHistory: [], historyIndex: 0, turn: "White" }
 
-// const reducer = (state, action) => {
-//     switch (action.type) {
-//         case "onopen":
-//             return { todoList: action.payload };
-//         case "onmessage":
-//             return { todoList: [...state.todoList, action.payload] };
-//         default:
-//             break
-//     }
-// }
+const reducer = (state, action) => {
+    switch (action.type) {
+        case "add_to_history":
+            return { ...state, boardHistory: [...state.boardHistory, action.payload] }
+        case "increment_historyIndex":
+            return { ...state, historyIndex: state.historyIndex + action.payload }
+        case "decrement_historyIndex":
+            return { ...state, historyIndex: state.historyIndex - action.payload }
+        case "change_turn":
+            return { ...state, turn: state.turn === "White" ? "Black" : "White" }
+        case "promote_pawn":
+            return { ...state, boardHistory: [ ...state.boardHistory.splice(0, state.boardHistory.length - 1), action.payload]}
+        default:
+            throw new Error()
+    }
+}
 
 export default function Board() {
     const [loading, setLoading] = useState(true)
     const [board, setBoard] = useState([])
-    const [boardHistory, setBoardHistory] = useState([])
-    const [historyIndex, setHistoryIndex] = useState(false)
     const [legalMoves, setLegalMoves] = useState({white: [], black: []})
     const [threats, setThreats] = useState({white: [], black: []})
     const [dimensions, setDimensions] = useState(5)
     const [source, setSource] = useState('')
-    const [turn, setTurn] = useState('White')
     const [placeMode, setPlaceMode] = useState({})
     const [gameState, setGameState] = useState('searching')
     const [autoQueen, setAutoQueen] = useState(false)
     const [menu, setMenu] = useState('moves')
     const [position, setPosition] = useState(null)
     const [token, setToken] = useState(uuidv4())
-    // const [state, dispatch] = useReducer(reducer, initialState);
+    const [state, dispatch] = useReducer(reducer, initialState)
 
     const connection = new WebSocket('ws://localhost:9090/')
 
     useEffect(() => {
-
         const board = setUpBoard()
-        console.log('initial board set')
         setBoard(board)
-        console.log('initial board history set')
-        setBoardHistory([board])
-        setHistoryIndex(0)
+        dispatch({type: 'add_to_history', payload: board})
         setLoading(false)
 
         connection.onopen = () => {
-            console.log('connection established')
             connection.send(JSON.stringify({action: 'searching', token}))
         }
 
         connection.onmessage = (message) => {
-            console.log('GOT A MESSAGE', message)
             const data = JSON.parse(message.data)
-            console.log('data', data)
             if (data.position) {
-                console.log('setting token and position')
                 setPosition(data.position)
             }
             if (data.state === 'begin') {
-                console.log('setting gamestate')
                 setGameState('running')
             }
             if (data.move) {
-                console.log('move time for')
-                console.log(data.token, data.token !== token, token)
                 if (data.token !== token) {
-                    console.log('opponent')
                     setBoard(data.move)
-                    const oldHistory = [board]
-                    console.log('old history', oldHistory)
-                    const newHistory = JSON.parse(JSON.stringify(oldHistory))
-                    console.log('new history', newHistory)
-                    newHistory.push(data.move)
-                    console.log('incrementing history index')
-                    setHistoryIndex(historyIndex + 1)
-                    console.log('adding to board history from onMessage')
-                    setBoardHistory(newHistory)
-                    setTurn('Black')
+                    dispatch({type: "add_to_history", payload: data.move})
+                    dispatch({type: "increment_historyIndex", payload: 1})
+                    dispatch({type: "change_turn", payload: ""})
+                }
+            }
+            if (data.promote_pawn) {
+                if (data.token !== token) {
+                    setBoard(data.promote_pawn)
+                    dispatch({type: "promote_pawn", payload: data.promote_pawn})
                 }
             }
         }
     }, [])
-
-    
 
     useEffect(() => {
         const newThreats = {white: [], black: []}
@@ -111,11 +99,11 @@ export default function Board() {
         }
         setThreats(newThreats)
         setLegalMoves(newLegalMoves)
-        if (newLegalMoves[turn.toLowerCase()].length === 0) {
+        if (newLegalMoves[state.turn.toLowerCase()].length === 0) {
             for (let square of board) {
                 if (square.piece.type) {
                     if (square.piece.type === "King") {
-                        if (square.piece.colour === turn) {
+                        if (square.piece.colour === state.turn) {
                             if (isKingInCheck(board, square.index, square.index, square.piece)) {
                                 setGameState('checkmate')
                             } else {
@@ -141,10 +129,13 @@ export default function Board() {
     }
 
     const selectSquare = (s) => {
+        if (position !== state.turn) {
+            return
+        }
         if (source !== '') {
             movePiece(source, s.index)
         } else {
-            if (turn === s.piece.colour) {
+            if (state.turn === s.piece.colour) {
                 let newBoard = JSON.parse(JSON.stringify(board))
                 const legalMoves = checkLegalMoves(newBoard, s.index, threats)
                 newBoard.map(square => {
@@ -286,19 +277,14 @@ export default function Board() {
             newBoard.map(square => square.highlight = false)
             setBoard(newBoard)
             setSource('')
-            setTurn(turn === "White" ? "Black" : "White")
+            dispatch({type: "change_turn", payload: ""})
         } else {
             newBoard.map(square => square.highlight = false)
             setBoard(newBoard)
             setSource('')
         }
-        const newHistory = JSON.parse(JSON.stringify(boardHistory))
-        console.log('newHistory', newHistory)
-        newHistory.push(newBoard)
-        console.log('incrementing history index')
-        setHistoryIndex(historyIndex + 1)
-        console.log('adding to board history from make move')
-        setBoardHistory(newHistory)
+        dispatch({type: "add_to_history", payload: newBoard})
+        dispatch({type: "increment_historyIndex", payload: 1})
         connection.send(JSON.stringify({move: newBoard, token, action: 'move'}))
     }
 
@@ -337,17 +323,15 @@ export default function Board() {
             }
         }
         setBoard(newBoard)
-        const newHistory = JSON.parse(JSON.stringify(boardHistory))
-        newHistory[boardHistory.length - 1] = newBoard
-        console.log('rewriting history')
-        setBoardHistory(newHistory)
+        dispatch({type: 'promote_pawn', payload: newBoard})
+        connection.send(JSON.stringify({move: newBoard, token, action: 'promote_pawn'}))
         let modal = document.getElementById("pawn_promotion");
         modal.style.display = "none";
     }
 
     const checkThreefoldRepetition = () => {
         let occurrences = {}
-        for (let position of boardHistory) {
+        for (let position of state.boardHistory) {
             const positionString = JSON.stringify(position)
             if (occurrences[positionString]) {
                 occurrences[positionString] += 1 
@@ -367,16 +351,11 @@ export default function Board() {
             <div>Loading</div>
         )
     }
-
-    console.log('pre render data check')
-    console.log('token', token, 'position', position, 'gameState', gameState)
-    console.log('board', board, 'boardHistory', boardHistory, 'historyIndex', historyIndex)
-    console.log('done')
     
     return (
         <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
             <div className="Board" style={{width: `${dimensions * 8}vw`}}>
-                    {boardHistory.length > 0 && historyIndex === boardHistory.length - 1 ? (
+                    {state.boardHistory.length > 0 && state.historyIndex === state.boardHistory.length - 1 ? (
                         board.map((s, s_idx) => {
                             let squareColour = Math.floor(s_idx / 8) % 2 === 0 ? s_idx % 2 === 0 ? "Black" : "White" : s_idx % 2 === 0 ? "White" : "Black"
 
@@ -398,7 +377,7 @@ export default function Board() {
                             )
                         })
                     ) : (
-                        boardHistory[historyIndex] && boardHistory[historyIndex].map((s, s_idx) => {
+                        state.boardHistory[state.historyIndex] && state.boardHistory[state.historyIndex].map((s, s_idx) => {
                             let squareColour = Math.floor(s_idx / 8) % 2 === 0 ? s_idx % 2 === 0 ? "Black" : "White" : s_idx % 2 === 0 ? "White" : "Black"
 
                             return (
@@ -421,13 +400,13 @@ export default function Board() {
                     )}
             </div>
             <div className="side-panel" >
-                <p style={{marginLeft: "10px", marginRight: "10px"}}>{gameState === 'running' ? turn + ' to move' : gameState === "stalemate" ? "Draw" : "Checkmate - " + (turn === "White" ? "Black" : "White") + " wins"}</p>
+                <p style={{marginLeft: "10px", marginRight: "10px"}}>{gameState === 'running' ? state.turn + ' to move' : gameState === "stalemate" ? "Draw" : "Checkmate - " + (state.turn === "White" ? "Black" : "White") + " wins"}</p>
                 <button onClick={() => setMenu('moves')}>Move History</button>
                 <button onClick={() => setMenu('setup')}>Set Up Board</button>
                 {menu === 'moves' ? (
                     <div>
-                        {historyIndex > 0 && <button onClick={() => setHistoryIndex(historyIndex - 1)}>{'<'}</button>}
-                        {boardHistory.length > 1 && historyIndex < boardHistory.length - 1 &&  <button onClick={() => setHistoryIndex(historyIndex + 1)}>{'>'}</button>}
+                        {state.historyIndex > 0 && <button onClick={() => dispatch({type: "decrement_historyIndex", payload: 1})}>{'<'}</button>}
+                        {state.boardHistory.length > 1 && state.historyIndex < state.boardHistory.length - 1 &&  <button onClick={() => dispatch({type: "increment_historyIndex", payload: 1})}>{'>'}</button>}
                     </div>
                 ) : (
                     <div>
@@ -437,7 +416,7 @@ export default function Board() {
                 )}
                 <button onClick={() => setAutoQueen(!autoQueen)} style={{backgroundColor: autoQueen ? "green" : "grey"}}>Auto Queen</button>
             </div>
-            <PawnPromotionModal promote={promote} dimensions={dimensions} turn={turn}/>
+            <PawnPromotionModal promote={promote} dimensions={dimensions} turn={state.turn}/>
         </div>
     )
 }
