@@ -43,8 +43,8 @@ export default function Board() {
     const [position, setPosition] = useState(null)
     const [token, setToken] = useState(uuidv4())
     const [state, dispatch] = useReducer(reducer, initialState)
+    const [connection, setConnection] = useState(new WebSocket('ws://warm-shore-31398.herokuapp.com/'))
 
-    const connection = new WebSocket('ws://localhost:9090/')
 
     useEffect(() => {
         const board = setUpBoard()
@@ -53,6 +53,7 @@ export default function Board() {
         setLoading(false)
 
         connection.onopen = () => {
+            console.log('connection established', connection)
             connection.send(JSON.stringify({action: 'searching', token}))
         }
 
