@@ -1,8 +1,14 @@
-import WebSocket from "ws";
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-export class ConnectionSchema {
-  constructor(webSocket, type) {
-    this.webSocket = webSocket;
-    this.type = type;
-  }
-}
+import { UserSchema } from './user';
+
+export const ConnectionSchema = new Schema({
+    id: String,
+    white: UserSchema.Schema,
+    black: UserSchema.Schema,
+});
+
+const Connection = mongoose.model('connection', Connection);
+
+module.exports = Connection;

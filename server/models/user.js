@@ -1,27 +1,17 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-import { GameSchema } from "./Game";
+import { GameSchema } from './game';
+import { ConnectionSchema } from './connection';
 
 export const UserSchema = new Schema({
-  email: {
-    type: String,
-    required: true,
-  },
-  displayName: {
-    type: String,
-    required: true,
-  },
-  registered_date: {
-    type: Date,
-    default: Date.now,
-  },
-  games: {
-    type: [GameSchema.Schema],
-    default: [],
-  },
+    email: String,
+    displayName: String,
+    joined: Date,
+    games: [GameSchema.Schema],
+    connections: [ConnectionSchema.Schema]
 });
 
-const User = mongoose.model("users", UserSchema);
+const User = mongoose.model('user', UserSchema);
 
 module.exports = User;
