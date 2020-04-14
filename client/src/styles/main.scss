@@ -1,0 +1,54 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: coral;
+    box-shadow: 0 2px 2px 2px rgba(0,0,0,.2);
+    padding-left: 40px;
+    padding-right: 40px;
+
+    a {
+        text-decoration: none;
+        color: black;
+        font-size: 1.6rem;
+        cursor: pointer;
+
+        &:focus, &:hover, &:visited, &:link, &:active {
+            text-decoration: none;
+        }
+    }
+
+    .user-nav {
+        display: flex;
+        justify-content: space-between;
+        color: black;
+        font-size: 1.6rem;
+
+        a:first-child {
+            margin-right: 20px;
+        }
+    }
+}
+
+.game-options-grid {
+    display: flex;
+    flex-wrap: wrap;
+    margin: auto;
+    width: 936px;
+    border: 1px solid black;
+    padding: 5px;
+
+    .game-option {
+        display: column;
+        justify-content: center;
+        justify-items: center;
+        width: 300px;
+        border: 1px solid black;
+        margin: 5px;
+        height: 150px;
+    }
+}
